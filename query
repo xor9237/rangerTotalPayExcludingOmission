@@ -1,0 +1,37 @@
+with "data" as
+(select
+    date_trunc('day', timezone('kst', t."updatedAt"))::date as "Date"
+    , r."name" as "role_name"
+    , case when left(lower(u."firstName"),1)
+        in ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z')
+        then concat(u."firstName", ' ', u."lastName")
+        else concat(u."lastName", u."firstName")
+    end as "name"
+    , t."assigneeId" as "userId"
+    , count(distinct t."id") filter (where t."status" = 2) as "numTasksCompleted"
+    , sum(t."rewardsUponStarting") filter (where t."status" = 2) as "totalPointsEarned"
+from "Tasks" t
+join "admin_users" u on u."id" = t."assigneeId"
+join "UserRoles" ur on ur."userId" = t."assigneeId"
+join "Roles" r on r."id" = ur."roleId"
+where r."name" like '%ranger'
+and r."countryId" = 51
+and timezone('kst', t."updatedAt")::date between '{{ date.start }}' and '{{ date.end }}'
+and r."name" = 'seoul_swap ranger'
+group by 1,2,3,4)
+
+, "data2" as
+(select
+    "Date"
+    , "role_name"
+    , "name"
+    , "userId"
+    , "numTasksCompleted"
+    , "totalPointsEarned"
+from "data"
+)
+
+select
+    *
+from "data2"
+
